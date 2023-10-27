@@ -45,21 +45,17 @@ return function (App $app) {
     //post data
     $app->post('/category', function (Request $request, Response $response) {
         $db = $this->get(PDO::class);
-    
-        // Ambil data dari request
+        
         $data = $request->getParsedBody();
         $categoryName = $data['category_name'];
-    
-        // Panggil stored procedure untuk menyimpan data
+
         $query = $db->prepare('CALL create_category(?, @result)');
         $query->bindParam(1, $categoryName, PDO::PARAM_STR);
         $query->execute();
-    
-        // Ambil hasil dari variabel MySQL @result
+ 
         $resultQuery = $db->query('SELECT @result as result');
         $result = $resultQuery->fetch(PDO::FETCH_ASSOC)['result'];
-    
-        // Tangani hasil operasi penyimpanan
+
         if (strpos($result, 'Error') !== false) {
             $response->getBody()->write(json_encode(['message' => $result]));
             $response = $response->withStatus(500);
@@ -79,17 +75,14 @@ return function (App $app) {
             $data = $request->getParsedBody();
             $newCategoryName = $data['new_category_name'];
 
-            // Prepare the call to the MySQL stored procedure
             $query = $db->prepare('CALL update_category(?,?,@result)');
             $query->bindParam(1, $categoryId, PDO::PARAM_INT);
             $query->bindParam(2, $newCategoryName, PDO::PARAM_STR);
             $query->execute();
 
-            // Fetch the result from the stored procedure
             $resultQuery = $db->query('SELECT @result as result');
             $result = $resultQuery->fetch(PDO::FETCH_ASSOC);
 
-            // Check the result and respond accordingly
             if ($result['result'] === 'Category berhasil diperbarui.') {
                 $response->getBody()->write(json_encode(['message' => $result['result']]));
                 return $response->withHeader('Content-Type', 'application/json');
